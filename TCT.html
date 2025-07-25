@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trait Creation Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles inspired by Apple's UI design */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .form-input, .form-select {
+            @apply pl-3 pr-10 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all;
+        }
+        .form-label {
+            @apply block text-sm font-medium text-gray-700 mb-1;
+        }
+        .btn {
+            @apply inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-150;
+        }
+        .btn-primary {
+            @apply text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500;
+        }
+        .btn-primary:disabled {
+            @apply bg-blue-400 cursor-not-allowed;
+        }
+        .btn-secondary {
+            @apply text-gray-700 bg-gray-200 hover:bg-gray-300 focus:ring-gray-400;
+        }
+        .card {
+            @apply bg-white p-6 sm:p-8 rounded-xl shadow-md;
+        }
+        .section-header {
+            @apply text-base font-bold text-gray-800 tracking-normal mb-6 pb-2 border-b border-gray-200;
+        }
+        .input-group {
+            @apply mb-8 relative;
+        }
+        .input-group:last-child { @apply mb-0; }
+
+        .validation-icon {
+            @apply absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5;
+        }
+        
+        /* Segmented Control */
+        .segmented-control { display: flex; border: 1px solid #d1d5db; border-radius: 0.375rem; overflow: hidden; }
+        .segmented-control-label { flex: 1; text-align: center; padding: 0.5rem 0.75rem; cursor: pointer; background-color: #ffffff; color: #374151; transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out; user-select: none; }
+        .segmented-control-input { display: none; }
+        .segmented-control-input:checked + .segmented-control-label { background-color: #3b82f6; color: #ffffff; font-weight: 500; }
+        .segmented-control-label:not(:last-child) { border-right: 1px solid #d1d5db; }
+
+        /* Table animation */
+        .new-row {
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .new-row.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="h-full">
+    <div class="min-h-full bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            
+            <header class="flex justify-center items-center space-x-4 mb-10">
+                <svg class="h-12 w-12" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" version="1.0" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" image-rendering="optimizeQuality" fill-rule="evenodd" clip-rule="evenodd" viewBox="0 0 200 200">
+                     <g id="Layer_x0020_1">
+                      <path fill="#0053E2" fill-rule="nonzero" d="M178.89 119.03c2.62,-2.62 2.64,-6.82 0.09,-9.37l-82.34 -82.37c-2.74,-2.73 -6.39,-4.43 -10.25,-4.75l-40.34 -3.41c-0.18,0 -0.37,-0.03 -0.55,-0.03 -1.76,0 -3.49,0.71 -4.75,2l-19.61 19.61c-1.43,1.42 -2.14,3.35 -1.96,5.32l3.42 40.35c0.33,3.88 2.02,7.51 4.76,10.24l82.34 82.34c2.54,2.55 6.77,2.53 9.36,-0.09l59.86 -59.86 -0.03 0.02z"/>
+                      <path fill="black" fill-rule="nonzero" d="M165.07 30.27c-6.26,-6.2 -14.56,-9.6 -23.37,-9.57 -8.82,0.04 -17.09,3.5 -23.29,9.76l-50.72 51.13c-0.58,0.59 -0.96,1.35 -1.06,2.18l-5.83 44.76c-0.24,1.89 0.4,3.75 1.74,5.09 0.62,0.62 1.35,1.08 2.14,1.38 0.93,0.35 1.94,0.47 2.96,0.32l44.73 -6.18c0.82,-0.12 1.59,-0.5 2.17,-1.09l45.03 -45.39 5.38 -5.43 0.31 -0.31c12.81,-12.91 12.72,-33.84 -0.2,-46.65l0.01 0z"/>
+                      <ellipse fill="white" stroke="white" stroke-width="2.08" stroke-miterlimit="2.61313" cx="54.06" cy="53.69" rx="11.86" ry="11.66"/>
+                      <path fill="black" fill-rule="nonzero" d="M54 70.56c-4.26,0 -8.5,-1.61 -11.74,-4.85 -6.47,-6.47 -6.47,-16.98 0,-23.46 6.48,-6.48 16.99,-6.48 23.47,0 6.47,6.48 6.47,16.99 0,23.46 -3.24,3.24 -7.49,4.85 -11.73,4.85zm6.82 -23.39c-1.88,-1.89 -4.36,-2.83 -6.82,-2.83 -2.45,0 -4.93,0.94 -6.81,2.83 -3.77,3.76 -3.77,9.89 0,13.66 3.76,3.76 9.89,3.76 13.66,0 3.77,-3.77 3.77,-9.9 0,-13.66l-0.03 0z"/>
+                      <polygon fill="#001E60" fill-rule="nonzero" points="68.58,127.54 69.84,117.82 78.29,126.2 "/>
+                      <polygon fill="#A9DDF7" fill-rule="nonzero" points="150.37,81.17 114.29,45.38 120.82,38.8 156.9,74.59 "/>
+                      <path fill="#F9D1A5" fill-rule="nonzero" d="M87.74 124.9l-16.66 -16.53 2.59 -19.89c1.78,0.34 3.47,0.27 4.95,0.21 2.77,-0.13 4.06,-0.13 5.55,1.35 1.48,1.47 1.5,2.75 1.4,5.52 -0.12,3.08 -0.27,7.31 3.63,11.18 3.9,3.88 8.13,3.69 11.21,3.55 2.77,-0.12 4.06,-0.11 5.54,1.35 1.48,1.48 1.5,2.76 1.4,5.53 -0.06,1.5 -0.1,3.2 0.25,4.99l-19.86 2.74z"/>
+                      <path fill="#FFC220" fill-rule="nonzero" d="M114.93 116.89c0.1,-3.02 0.03,-6.98 -3.65,-10.64 -3.9,-3.87 -8.12,-3.68 -11.21,-3.54 -2.77,0.12 -4.06,0.11 -5.54,-1.36 -1.48,-1.47 -1.5,-2.75 -1.39,-5.52 0.11,-3.08 0.26,-7.31 -3.64,-11.18 -3.66,-3.63 -7.6,-3.69 -10.62,-3.57l30.07 -30.31 36.08 35.79 -30.1 30.33z"/>
+                      <path fill="#FFA98F" fill-rule="nonzero" stroke="#FFA98F" stroke-width="2.08" stroke-miterlimit="2.61313" d="M159.73 35.65c9.14,9.07 9.91,23.39 2.33,33.38l-35.72 -35.44c9.92,-7.66 24.25,-7 33.39,2.06z"/>
+                     </g>
+                </svg>
+                <h1 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Trait Creation Tool</h1>
+            </header>
+
+            <div class="card mb-8">
+                <div id="form-grid" class="grid grid-cols-1 gap-x-12 md:grid-cols-3">
+                    <!-- Column 1: Identifiers -->
+                    <div>
+                        <h4 class="section-header">Identifiers</h4>
+                        <div class="input-group">
+                            <label for="deptNumber" class="form-label">Department Number</label>
+                            <div class="relative">
+                                <input type="text" id="deptNumber" class="form-input w-full" placeholder="e.g., 92" maxlength="2">
+                                <span id="deptNumber-validation" class="validation-icon"></span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="categoryNumber" class="form-label">Category Number</label>
+                            <div class="relative">
+                                <input type="text" id="categoryNumber" class="form-input w-full" placeholder="e.g., 5555" maxlength="4">
+                                <span id="categoryNumber-validation" class="validation-icon"></span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="cluster" class="form-label">Cluster</label>
+                            <div class="relative">
+                                <input type="text" id="cluster" class="form-input w-full" placeholder="e.g., BASIC123">
+                                <span id="cluster-validation" class="validation-icon"></span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Must begin with 5 unique characters.</p>
+                        </div>
+                        <div class="input-group">
+                            <label for="category" class="form-label">Category</label>
+                            <div class="relative">
+                                <input type="text" id="category" class="form-input w-full" placeholder="e.g., APPAREL">
+                                <span id="category-validation" class="validation-icon"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Specifications -->
+                    <div>
+                        <h4 class="section-header">Specifications</h4>
+                        <div class="input-group">
+                            <label for="year" class="form-label">Effective Year</label>
+                            <div class="relative">
+                                <input type="text" id="year" class="form-input w-full" placeholder="e.g., 2025" maxlength="4">
+                                <span id="year-validation" class="validation-icon"></span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="week" class="form-label">Effective Week</label>
+                            <div class="relative">
+                                <input type="text" id="week" class="form-input w-full" placeholder="e.g., 52" maxlength="2">
+                                <span id="week-validation" class="validation-icon"></span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h5 class="text-sm font-medium text-gray-600 mb-3">Dimensions</h5>
+                            <div class="input-group">
+                                <label for="width" class="form-label">Width (in)</label>
+                                <div class="relative">
+                                    <input type="text" id="width" class="form-input w-full" placeholder="e.g., 48" maxlength="3">
+                                    <span id="width-validation" class="validation-icon"></span>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="height" class="form-label">Height (in)</label>
+                                <div class="relative">
+                                    <input type="text" id="height" class="form-input w-full" placeholder="e.g., 72" maxlength="3">
+                                    <span id="height-validation" class="validation-icon"></span>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="depth" class="form-label">Depth (in)</label>
+                                <div class="relative">
+                                    <input type="text" id="depth" class="form-input w-full" placeholder="e.g., 22" maxlength="2">
+                                    <span id="depth-validation" class="validation-icon"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 3: Attributes -->
+                    <div>
+                        <h4 class="section-header">Attributes</h4>
+                        <div class="input-group">
+                            <label for="oldSeason" class="form-label">Old Version Season</label>
+                            <select id="oldSeason" class="form-select w-full"></select>
+                        </div>
+                        <div class="input-group">
+                            <label for="newSeason" class="form-label">New Version Season</label>
+                            <select id="newSeason" class="form-select w-full"></select>
+                        </div>
+                        <div class="input-group">
+                            <label for="fixtureType" class="form-label">Fixture Type</label>
+                            <select id="fixtureType" class="form-select w-full"></select>
+                        </div>
+                        <div class="input-group">
+                            <label for="mirrorType" class="form-label">Mirror Type</label>
+                            <select id="mirrorType" class="form-select w-full"></select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-lg mx-auto">
+                    <div>
+                        <label class="form-label text-center">New Store Trait Survey</label>
+                        <div class="segmented-control">
+                            <input type="radio" id="newStore-no" name="newStoreTraitSurvey" value="N" checked class="segmented-control-input">
+                            <label for="newStore-no" class="segmented-control-label">No</label>
+                            <input type="radio" id="newStore-yes" name="newStoreTraitSurvey" value="Y" class="segmented-control-input">
+                            <label for="newStore-yes" class="segmented-control-label">Yes</label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label text-center">Exp/Relo Trait Survey</label>
+                        <div class="segmented-control">
+                            <input type="radio" id="expRelo-no" name="expReloTraitSurvey" value="N" checked class="segmented-control-input">
+                            <label for="expRelo-no" class="segmented-control-label">No</label>
+                            <input type="radio" id="expRelo-yes" name="expReloTraitSurvey" value="Y" class="segmented-control-input">
+                            <label for="expRelo-yes" class="segmented-control-label">Yes</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-12 text-right">
+                    <button id="addTraitBtn" class="btn btn-primary w-full sm:w-auto" disabled>
+                        <svg class="w-5 h-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Add Trait to Table
+                    </button>
+                </div>
+            </div>
+
+            <!-- Data Table Section -->
+            <div id="table-container">
+                <div id="table-empty-state" class="text-center py-12 px-6 bg-white rounded-lg shadow">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2z" />
+                    </svg>
+                    <h3 class="mt-2 text-lg font-medium text-gray-900">Your Traits Will Appear Here</h3>
+                    <p class="mt-1 text-sm text-gray-500">Fill out the form above and click "Add Trait" to get started.</p>
+                </div>
+
+                <div id="table-section" class="hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-3 sm:mb-0">Generated Traits</h2>
+                        <div class="flex space-x-3">
+                            <button id="copyBtn" class="btn btn-secondary">Copy Table</button>
+                            <button id="exportBtn" class="btn btn-secondary">Export as CSV</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto bg-white rounded-lg shadow">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dept Name</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category Name (Old)</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category Name (New)</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trait Name</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trait Desc</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">New Store</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exp/Relo</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UD1</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UD2</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UD3</th>
+                                    <th scope="col" class="relative px-4 py-3"><span class="sr-only">Remove</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="traitTableBody" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white px-5 py-3 rounded-lg shadow-lg opacity-0 translate-y-10 transition-all duration-300">
+                Copied to clipboard!
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DATA ---
+        const oldVersionSeasons = [ { value: 'F.', display: 'F' }, { value: 'S.', display: 'S' }, { value: 'Y.', display: 'Y' } ];
+        const newVersionSeasons = [ { value: 'YR', display: 'Year-round' }, { value: 'SP', display: 'Spring' }, { value: 'VA', display: 'Valentines' }, { value: 'EA', display: 'Easter' }, { value: 'SM', display: 'Summer' }, { value: 'BS', display: 'Back to School' }, { value: 'SF', display: 'Summer Frights' }, { value: 'FA', display: 'Fall' }, { value: 'HA', display: 'Halloween' }, { value: 'CH', display: 'Christmas' } ];
+        const fixtureTypes = [ { value: 'BE', display: 'Bench' }, { value: 'BR', display: 'Bike Rack' }, { value: 'BT', display: 'Battery Rack' }, { value: '??', display: 'Battery Islander' }, { value: 'CA', display: 'Cabinet' }, { value: '??', display: 'Case' }, { value: 'CD', display: 'Cooler Door' }, { value: 'Co', display: 'Counter' }, { value: 'CR', display: 'Circle Rack' }, { value: 'DB', display: 'Drop Box' }, { value: 'DN', display: 'Dump Bin' }, { value: 'DS', display: 'Display Space' }, { value: 'EC', display: 'Endcap' }, { value: 'FW', display: 'Fourway' }, { value: '??', display: 'Battery Flow-thru' }, { value: '??', display: 'Oil Flow-thru' }, { value: 'GC', display: 'Greeting Cards' }, { value: 'GN', display: 'Gondola' }, { value: 'KI', display: 'Kiosk' }, { value: 'LP', display: 'Live Plant Rack' }, { value: 'MC', display: 'Misc' }, { value: 'MI', display: 'Media Islander' }, { value: 'MU', display: 'Multiple Dims Per Attribute' }, { value: 'NO', display: 'None' }, { value: 'PC', display: 'Paint Chip Rack' }, { value: 'PL', display: 'Pallet' }, { value: 'RE', display: 'Register' }, { value: 'RI', display: 'Riser' }, { value: 'SA', display: 'Saddlebag' }, { value: 'SB', display: 'Stackbase' }, { value: 'SC', display: 'Showcase' }, { value: 'SK', display: 'Sidekick' }, { value: 'TB', display: 'Table' }, { value: 'TC', display: 'Trendcap' }, { value: 'TO', display: 'Tower' }, { value: 'TP', display: 'Trend Pod' }, { value: 'TS', display: 'T-System' }, { value: 'WA', display: 'Water' }, { value: 'WR', display: 'Water Rack' }, { value: 'WH', display: 'Warehouse Rack' } ];
+        const mirrorTypes = [ { value: 'R', display: 'Right' }, { value: 'L', display: 'Left (logic not used)' }, { value: 'Z', display: 'Zero foot, Not mirrored' } ];
+
+        // --- DOM Elements ---
+        const form = document.getElementById('form-grid');
+        const formInputs = {
+            deptNumber: document.getElementById('deptNumber'), categoryNumber: document.getElementById('categoryNumber'),
+            cluster: document.getElementById('cluster'), category: document.getElementById('category'),
+            oldSeason: document.getElementById('oldSeason'), newSeason: document.getElementById('newSeason'),
+            year: document.getElementById('year'), week: document.getElementById('week'),
+            width: document.getElementById('width'), height: document.getElementById('height'),
+            depth: document.getElementById('depth'), fixtureType: document.getElementById('fixtureType'),
+            mirrorType: document.getElementById('mirrorType'),
+            newStoreTraitSurvey: () => document.querySelector('input[name="newStoreTraitSurvey"]:checked').value,
+            expReloTraitSurvey: () => document.querySelector('input[name="expReloTraitSurvey"]:checked').value
+        };
+        const addTraitBtn = document.getElementById('addTraitBtn');
+        const traitTableBody = document.getElementById('traitTableBody');
+        const tableSection = document.getElementById('table-section');
+        const tableEmptyState = document.getElementById('table-empty-state');
+        const copyBtn = document.getElementById('copyBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const toast = document.getElementById('toast');
+        
+        const requiredFieldIds = ['deptNumber', 'categoryNumber', 'year', 'week', 'width', 'height', 'depth', 'cluster', 'category'];
+
+        // --- Helper Functions ---
+        const populateSelect = (el, data, defVal) => {
+            el.innerHTML = '';
+            data.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.value;
+                option.textContent = item.display;
+                el.appendChild(option);
+            });
+            if (defVal) el.value = defVal;
+        };
+
+        const padNumber = (num, len) => String(num).padStart(len, '0');
+        const showToast = (msg) => {
+            toast.textContent = msg;
+            toast.classList.remove('opacity-0', 'translate-y-10');
+            setTimeout(() => toast.classList.add('opacity-0', 'translate-y-10'), 2000);
+        };
+
+        const setValidationIcon = (fieldId, isValid) => {
+            const iconSpan = document.getElementById(`${fieldId}-validation`);
+            if (!iconSpan) return;
+            const inputEl = document.getElementById(fieldId);
+            if (inputEl.value === '') {
+                iconSpan.innerHTML = '';
+                inputEl.classList.remove('border-red-500', 'border-green-500');
+                return;
+            }
+            if(isValid) {
+                iconSpan.innerHTML = `<svg class="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>`;
+                inputEl.classList.remove('border-red-500');
+                inputEl.classList.add('border-green-500');
+            } else {
+                iconSpan.innerHTML = `<svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>`;
+                inputEl.classList.remove('border-green-500');
+                inputEl.classList.add('border-red-500');
+            }
+        };
+
+        // --- Validation & Form State ---
+        const isFieldValid = (id) => {
+            const input = formInputs[id];
+            if (!input || !input.value.trim()) return false;
+            if (id === 'cluster') {
+                const firstFive = input.value.substring(0, 5);
+                return firstFive.length === 5 && new Set(firstFive.split('')).size === 5;
+            }
+            return true;
+        };
+        
+        const checkFormValidity = () => {
+            const allValid = requiredFieldIds.every(isFieldValid);
+            addTraitBtn.disabled = !allValid;
+        };
+
+        // --- Initialization ---
+        const initializeForm = () => {
+            populateSelect(formInputs.oldSeason, oldVersionSeasons);
+            populateSelect(formInputs.newSeason, newVersionSeasons, 'YR');
+            populateSelect(formInputs.fixtureType, fixtureTypes, 'GN');
+            populateSelect(formInputs.mirrorType, mirrorTypes);
+            checkFormValidity();
+        };
+
+        // --- Event Listeners ---
+        requiredFieldIds.forEach(id => {
+            formInputs[id].addEventListener('input', () => {
+                setValidationIcon(id, isFieldValid(id));
+                checkFormValidity();
+            });
+        });
+
+        ['deptNumber', 'categoryNumber', 'year', 'week', 'width', 'height', 'depth'].forEach(id => {
+            formInputs[id].addEventListener('input', (e) => e.target.value = e.target.value.replace(/[^0-9]/g, ''));
+        });
+        formInputs.cluster.addEventListener('input', (e) => e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase());
+        formInputs.category.addEventListener('input', (e) => e.target.value = e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase());
+
+        addTraitBtn.addEventListener('click', () => {
+            if (!requiredFieldIds.every(isFieldValid)) return;
+
+            const values = {
+                deptNumber: formInputs.deptNumber.value, categoryNumber: formInputs.categoryNumber.value,
+                oldSeason: formInputs.oldSeason.value, newSeason: formInputs.newSeason.value,
+                year: formInputs.year.value, week: formInputs.week.value,
+                width: formInputs.width.value, height: formInputs.height.value,
+                depth: formInputs.depth.value, fixtureType: formInputs.fixtureType.value,
+                mirrorType: formInputs.mirrorType.value, cluster: formInputs.cluster.value,
+                category: formInputs.category.value, newStoreSurvey: formInputs.newStoreTraitSurvey(),
+                expReloSurvey: formInputs.expReloTraitSurvey()
+            };
+
+            const deptName = `DEPT ${padNumber(values.deptNumber, 2)}MOD`;
+            const categoryNameOld = `C${padNumber(values.categoryNumber, 4)} ${values.oldSeason} ${values.category}`;
+            const categoryNameNew = `C${padNumber(values.categoryNumber, 4)}_${values.newSeason}_${values.category}`;
+            const traitName = `${padNumber(values.width, 3)}${padNumber(values.height, 3)}${padNumber(values.depth, 2)}${values.fixtureType}${values.mirrorType}_${values.cluster}`;
+            const traitDesc = `${deptName}-${categoryNameNew}-${traitName}-${values.mirrorType}-${values.cluster}`;
+            const ud1 = `${padNumber(values.width, 3)}F X ${padNumber(values.height, 3)}I X ${padNumber(values.depth, 2)}I`;
+            const ud2 = `${padNumber(values.year, 4)}${padNumber(values.week, 2)}`;
+            const ud3 = values.cluster;
+
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 group new-row';
+            row.innerHTML = `
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${deptName}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${categoryNameOld}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${categoryNameNew}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${traitName}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${traitDesc}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-800">${values.newStoreSurvey}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-800">${values.expReloSurvey}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${ud1}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${ud2}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${ud3}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                    <button class="remove-btn text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" title="Remove row">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
+                    </button>
+                </td>
+            `;
+            traitTableBody.appendChild(row);
+            requestAnimationFrame(() => row.classList.add('visible'));
+
+            tableEmptyState.classList.add('hidden');
+            tableSection.classList.remove('hidden');
+
+            requiredFieldIds.forEach(id => {
+                formInputs[id].value = '';
+                setValidationIcon(id, false); // Reset icons
+            });
+            document.getElementById('newStore-no').checked = true;
+            document.getElementById('expRelo-no').checked = true;
+            initializeForm();
+            formInputs.deptNumber.focus();
+        });
+
+        traitTableBody.addEventListener('click', (e) => {
+            const removeBtn = e.target.closest('.remove-btn');
+            if (removeBtn) {
+                const row = removeBtn.closest('tr');
+                row.remove();
+                if (traitTableBody.rows.length === 0) {
+                    tableSection.classList.add('hidden');
+                    tableEmptyState.classList.remove('hidden');
+                }
+            }
+        });
+
+        const getTableData = (format) => {
+            const headers = Array.from(document.querySelectorAll('#table-section thead th')).map(th => th.textContent.trim()).slice(0, -1);
+            const rows = Array.from(traitTableBody.querySelectorAll('tr'));
+            let content = (format === 'csv' ? headers.map(h => `"${h}"`).join(',') : headers.join('\t')) + '\n';
+            rows.forEach(row => {
+                const cells = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim()).slice(0, -1);
+                content += (format === 'csv' ? cells.map(c => `"${c}"`).join(',') : cells.join('\t')) + '\n';
+            });
+            return content;
+        };
+
+        copyBtn.addEventListener('click', () => {
+            if (traitTableBody.rows.length === 0) return;
+            const tableContent = getTableData('tabs');
+            const textarea = document.createElement('textarea');
+            textarea.value = tableContent;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Table copied to clipboard!');
+            } catch (err) {
+                showToast('Failed to copy.');
+            }
+            document.body.removeChild(textarea);
+        });
+
+        exportBtn.addEventListener('click', () => {
+            if (traitTableBody.rows.length === 0) return;
+            const csvContent = getTableData('csv');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'traits_export.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        initializeForm();
+    });
+    </script>
+</body>
+</html>
