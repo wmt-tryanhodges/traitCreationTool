@@ -2,11 +2,11 @@
   "version": 1,
   "locale": "en_US",
   "platform": {
-    "OS": "windows",
+    "OS": "linux",
     "distribution": null
   },
   "metadata": {
     "appmode": "static",
-    "primary_html": "tct.html"
+    "primary_html": "index.html"
   }
 }
